@@ -1,0 +1,15 @@
+[Unit]
+Description=SeekLib Hardware Sensors Controller
+After=multi-user.target seeklib-web.service
+
+[Service]
+Type=simple
+User=seeklib
+WorkingDirectory=/home/seeklib/seeklib
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/seeklib/seeklib/.venv/bin/python -u hardware_controller.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+flask>=3.0.0
+gunicorn>=21.2.0
+bcrypt>=4.1.2
+pyserial>=3.5
+spidev>=3.6
+gpiozero>=2.0.1
+lgpio>=0.2.2.0
+adafruit-circuitpython-fingerprint>=2.2.8

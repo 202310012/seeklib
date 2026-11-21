@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SeekLib — Panel de Control</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #0f172a; margin: 0; }
+    header {
+      background: #0f172a; color: #fff; padding: 1rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    .container { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: #fff; padding: 1.2rem; border-radius: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .stat-card span { font-size: 0.85rem; color: #64748b; }
+    .stat-card strong { display: block; font-size: 1.8rem; margin-top: 0.25rem; color: #2563eb; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .card { background: #fff; padding: 1.25rem; border-radius: 0.6rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card h2 { margin: 0 0 1rem; font-size: 1.05rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+    input, select {
+      width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #cbd5e1;
+      border-radius: 0.4rem; margin-bottom: 0.65rem; font-size: 0.9rem;
+    }
+    button {
+      background: #2563eb; color: #fff; border: none; padding: 0.6rem 1rem;
+      border-radius: 0.4rem; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+    }
+    button:hover { background: #1d4ed8; }
+    button.sec { background: #0f172a; }
+    button.green { background: #16a34a; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; color: #475569; }
+    .badge { padding: 0.2rem 0.5rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+    .PRESENTE { background: #dcfce7; color: #166534; }
+    .RETARDO { background: #fef9c3; color: #854d0e; }
+    #statusMsg { margin-top: 0.6rem; font-size: 0.88rem; font-weight: 600; color: #2563eb; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SeekLib — Control de Asistencia Local</h1>
+    <div>
+      <a href="/api/exportar.csv" style="color:#93c5fd;margin-right:1rem;text-decoration:none;font-weight:600;">Descargar CSV</a>
+      <button class="sec" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card"><span>Estudiantes Activos</span><strong id="stTotal">0</strong></div>
+      <div class="stat-card"><span>Presentes Hoy</span><strong id="stPresentes" style="color:#16a34a;">0</strong></div>
+      <div class="stat-card"><span>Retardos Hoy</span><strong id="stRetardos" style="color:#ca8a04;">0</strong></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1. Nuevo Grupo / Materia</h2>
+        <input id="gNombre" placeholder="Nombre del Grupo (ej. 5A-ISC)">
+        <input id="gCarrera" placeholder="Carrera (ej. Ingeniería en Sistemas)">
+        <button onclick="crearGrupo()">Guardar Grupo</button>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1rem 0;">
+        <input id="mClave" placeholder="Clave Materia (ej. MAT101)">
+        <input id="mNombre" placeholder="Nombre de la Materia">
+        <select id="mGrupo"></select>
+        <button onclick="crearMateria()">Guardar Materia</button>
+      </div>
+
+      <div class="card">
+        <h2>2. Horario de Clase</h2>
+        <select id="hMateria"></select>
+        <select id="hDia">
+          <option value="0">Lunes</option>
+          <option value="1">Martes</option>
+          <option value="2">Miércoles</option>
+          <option value="3">Jueves</option>
+          <option value="4">Viernes</option>
+          <option value="5">Sábado</option>
+          <option value="6">Domingo</option>
+        </select>
+        <input type="time" id="hInicio" value="08:00">
+        <input type="time" id="hFin" value="10:00">
+        <input type="number" id="hTol" value="15" placeholder="Tolerancia (minutos)">
+        <button onclick="crearHorario()">Agregar Horario</button>
+      </div>
+
+      <div class="card">
+        <h2>3. Alumno y Enrolamiento Biométrico</h2>
+        <input id="eMat" placeholder="Matrícula">
+        <input id="eNom" placeholder="Nombre(s)">
+        <input id="eApe" placeholder="Apellidos">
+        <select id="eGrupo"></select>
+        <button onclick="crearEstudiante()">Guardar Alumno</button>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:1rem 0;">
+        <select id="enrolMat"></select>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="green" style="flex:1;" onclick="enrolar('rfid')">Enrolar RFID</button>
+          <button class="sec" style="flex:1;" onclick="enrolar('huella')">Enrolar Huella</button>
+        </div>
+        <div id="statusMsg"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2>Asistencias Recientes (Actualización Automática)</h2>
+      <table>
+        <thead>
+          <tr><th>Hora</th><th>Matrícula</th><th>Estudiante</th><th>Materia</th><th>Método</th><th>Estatus</th></tr>
+        </thead>
+        <tbody id="tbRegistros"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Padrón de Estudiantes</h2>
+      <table>
+        <thead>
+          <tr><th>Matrícula</th><th>Nombre</th><th>Grupo</th><th>UID RFID</th><th>ID Huella</th></tr>
+        </thead>
+        <tbody id="tbEstudiantes"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function cargarTodo() {
+      const res = await fetch("/api/dashboard");
+      if (!res.ok) return;
+      const d = await res.json();
+
+      document.getElementById("stTotal").textContent = d.resumen.total_estudiantes;
+      document.getElementById("stPresentes").textContent = d.resumen.presentes_hoy;
+      document.getElementById("stRetardos").textContent = d.resumen.retardos_hoy;
+
+      const optsGrupo = '<option value="">-- Sin grupo --</option>' +
+        d.grupos.map(g => `<option value="${g.id_grupo}">${g.nombre_grupo}</option>`).join("");
+      document.getElementById("mGrupo").innerHTML = optsGrupo;
+      document.getElementById("eGrupo").innerHTML = optsGrupo;
+
+      document.getElementById("hMateria").innerHTML =
+        d.materias.map(m => `<option value="${m.id_materia}">${m.clave} - ${m.nombre_materia}</option>`).join("");
+
+      document.getElementById("enrolMat").innerHTML =
+        d.estudiantes.map(e => `<option value="${e.matricula}">${e.matricula} - ${e.nombre} ${e.apellido}</option>`).join("");
+
+      document.getElementById("tbRegistros").innerHTML = d.registros.map(r => `
+        <tr>
+          <td>${r.fecha_hora.replace("T", " ")}</td>
+          <td>${r.matricula}</td>
+          <td>${r.estudiante}</td>
+          <td>${r.materia}</td>
+          <td>${r.metodo_registro}</td>
+          <td><span class="badge ${r.estatus}">${r.estatus}</span></td>
+        </tr>
+      `).join("");
+
+      document.getElementById("tbEstudiantes").innerHTML = d.estudiantes.map(e => `
+        <tr>
+          <td>${e.matricula}</td>
+          <td>${e.nombre} ${e.apellido}</td>
+          <td>${e.nombre_grupo || "-"}</td>
+          <td>${e.uid_rfid || "Sin asignar"}</td>
+          <td>${e.id_huella ?? "Sin asignar"}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function postJSON(url, body) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) alert(data.error || "Error en operación");
+      else cargarTodo();
+      return data;
+    }
+
+    function crearGrupo() {
+      postJSON("/api/grupos", {
+        nombre_grupo: document.getElementById("gNombre").value,
+        carrera: document.getElementById("gCarrera").value
+      });
+    }
+    function crearMateria() {
+      postJSON("/api/materias", {
+        clave: document.getElementById("mClave").value,
+        nombre_materia: document.getElementById("mNombre").value,
+        id_grupo: document.getElementById("mGrupo").value || null
+      });
+    }
+    function crearHorario() {
+      postJSON("/api/horarios", {
+        id_materia: document.getElementById("hMateria").value,
+        dia_semana: document.getElementById("hDia").value,
+        hora_inicio: document.getElementById("hInicio").value,
+        hora_fin: document.getElementById("hFin").value,
+        tolerancia_minutos: document.getElementById("hTol").value
+      });
+    }
+    function crearEstudiante() {
+      postJSON("/api/estudiantes", {
+        matricula: document.getElementById("eMat").value,
+        nombre: document.getElementById("eNom").value,
+        apellido: document.getElementById("eApe").value,
+        id_grupo: document.getElementById("eGrupo").value || null
+      });
+    }
+    async function enrolar(tipo) {
+      const msg = document.getElementById("statusMsg");
+      const matricula = document.getElementById("enrolMat").value;
+      msg.textContent = tipo === "rfid"
+        ? "Acerca la tarjeta RFID al lector (15s)..."
+        : "Coloca el dedo dos veces en el sensor AS608...";
+      const res = await fetch(`/api/enrolar/${tipo}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matricula })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        msg.textContent = tipo === "rfid"
+          ? `Tarjeta registrada: ${data.uid_rfid}`
+          : `Huella registrada en ID #${data.id_huella}`;
+        cargarTodo();
+      } else {
+        msg.textContent = "Error: " + (data.error || "Fallo en enrolamiento");
+      }
+    }
+    async function logout() {
+      await fetch("/logout", { method: "POST" });
+      window.location.href = "/login";
+    }
+
+    cargarTodo();
+    setInterval(cargarTodo, 4000);
+  </script>
+</body>
+</html>
